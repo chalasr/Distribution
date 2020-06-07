@@ -74,7 +74,7 @@ before_script:
   - sudo swapon -s
 
   # get and configure claroline platform
-  - curl -L https://github.com/claroline/Claroline/archive/${TRAVIS_BRANCH}.tar.gz | tar xzv
+  - curl -L https://github.com/claroline/Claroline/archive/12.5.tar.gz | tar xzv
   - cd Claroline-${TRAVIS_BRANCH}
   - php scripts/configure.php --default
   # override platform composer.json with build/repo local reference
