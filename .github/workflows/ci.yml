@@ -1,0 +1,56 @@
+name: "Tests"
+
+on:
+    pull_request:
+    push:
+
+jobs:
+    php-74:
+        name: PHP 7.4
+        runs-on: ubuntu-latest
+
+        services:
+            mysql:
+                image: mysql:8.0
+                ports:
+                    - 3306
+                env:
+                    MYSQL_USER: root
+                    MYSQL_PASSWORD: ""
+                    MYSQL_DATABASE: claroline_test
+                    MYSQL_ROOT_PASSWORD: root
+                options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries=3
+
+        steps:
+            - name: "Checkout"
+              uses: "actions/checkout@v2"
+              with:
+                  fetch-depth: 2
+
+            - name: "Install PHP 7.4"
+              uses: "shivammathur/setup-php@v2"
+              with:
+                  php-version: "7.4"
+
+            - name: "Install MySQL 8"
+              run: |
+                  wget https://repo.mysql.com//mysql-apt-config_0.8.10-1_all.deb
+                  sudo dpkg -i mysql-apt-config_0.8.10-1_all.deb
+                  sudo apt-get update -q
+                  sudo apt-get install -q -y --allow-unauthenticated -o Dpkg::Options::=--force-confnew mysql-server
+                  sudo systemctl restart mysql
+                  sudo mysql_upgrade
+                  mysql --version
+
+            - name: "Cache composer packages"
+              uses: "actions/cache@v2"
+              with:
+                  path: "~/.composer/cache"
+                  key: "composer-locked-${{ hashFiles('composer.lock') }}"
+                  restore-keys: "composer-locked-"
+
+            - name: "Install dependencies with composer"
+              run: "composer update --no-interaction"
+
+            - name: "Run PHPUnit Tests"
+              run: "vendor/bin/simple-phpunit --dont-report-useless-tests"
